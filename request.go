@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/BigJiaXuan/synjonesSDK/internal"
 	"io"
 	"net/URL"
 	"net/http"
 	"sort"
 	"strings"
-	"synjonesSDK/internal"
 	"time"
 )
 
