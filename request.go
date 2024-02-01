@@ -80,7 +80,6 @@ func (r *RequestImpl) Send(ctx context.Context, token, request, method string) (
 		return "", "", err
 	}
 	// 准备对body进行解密
-	fmt.Println("处理前的response", string(body))
 	code, resp = r.decodeResponse(string(body))
 	return code, resp, nil
 }
