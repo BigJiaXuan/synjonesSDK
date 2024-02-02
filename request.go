@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -81,6 +82,11 @@ func (r *RequestImpl) Send(ctx context.Context, token, request, method string) (
 	}
 	// 准备对body进行解密
 	code, resp = r.decodeResponse(string(body))
+	// 判断当code非0时，返回错误信息
+	if code != "0" {
+		intCode, _ := strconv.Atoi(code)
+		resp = ErrMsg(int64(intCode))
+	}
 	return code, resp, nil
 }
 
