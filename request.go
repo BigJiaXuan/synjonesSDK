@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var RequestMethod = map[string]string{
@@ -103,9 +104,8 @@ func (r *RequestImpl) Send(ctx context.Context, token, request, method string) (
 func (r *RequestImpl) sortSign(token, request, method string) string {
 	// 声明一个sign结构体
 	var SignMethod = map[string]string{
-		"method": "",
-		//"timestamp":    time.Now().Format("2006-01-02 15:04:05"),
-		"timestamp":    "2023-01-31 15:04:05",
+		"method":       "",
+		"timestamp":    time.Now().Format("2006-01-02 15:04:05"),
 		"format":       "json",
 		"app_key":      "",
 		"access_token": "",
