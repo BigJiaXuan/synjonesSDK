@@ -14,17 +14,6 @@ import (
 	"time"
 )
 
-var RequestMethod = map[string]string{
-	"method":       "",
-	"timestamp":    time.Now().Format("2006-01-02 15:04:05"),
-	"format":       "json",
-	"app_key":      "",
-	"access_token": "",
-	"v":            "2.0",
-	"sign_method":  "rsa",
-	"request":      "",
-}
-
 type Conf struct {
 	URL         string //tsm 地址
 	AppKey      string
@@ -54,16 +43,21 @@ func (r *RequestImpl) Send(ctx context.Context, token, request, method string) (
 	// 3.给sign签名
 	signed := r.encrypt.SignatureSign(sign, r.conf.SvcPkcs8Key)
 	// 准备http请求体
-	req := RequestMethod
-	req["method"] = method
-	req["app_key"] = r.conf.AppKey
-	req["access_token"] = token
-	req["sign"] = signed
+	req := map[string]string{
+		"method":       method,
+		"timestamp":    time.Now().Format("2006-01-02 15:04:05"),
+		"format":       "json",
+		"app_key":      r.conf.AppKey,
+		"access_token": token,
+		"v":            "2.0",
+		"sign_method":  "rsa",
+		"request":      requested,
+		"sign":         signed,
+	}
 	formData := url.Values{}
 	for key, value := range req {
 		formData.Set(key, value)
 	}
-	fmt.Println(bytes.NewBufferString(formData.Encode()))
 	// 发送http请求
 	response, err := http.Post(r.conf.URL, "application/x-www-form-urlencoded", bytes.NewBufferString(formData.Encode()))
 	if err != nil {
@@ -102,21 +96,16 @@ func (r *RequestImpl) Send(ctx context.Context, token, request, method string) (
 //	@return string access_tokenxxxapp_keyxxxformatxxxmethodxxxrequestxxxtimestampxxxvxxx
 func (r *RequestImpl) sortSign(token, request, method string) string {
 	// 声明一个sign结构体
-	var SignMethod = map[string]string{
-		"method":       "",
+	sign := map[string]string{
+		"method":       method,
 		"timestamp":    time.Now().Format("2006-01-02 15:04:05"),
 		"format":       "json",
-		"app_key":      "",
-		"access_token": "",
+		"app_key":      r.conf.AppKey,
+		"access_token": token,
 		"v":            "2.0",
 		"sign_method":  "rsa",
-		"request":      "",
+		"request":      request,
 	}
-	sign := SignMethod
-	sign["access_token"] = token
-	sign["app_key"] = r.conf.AppKey
-	sign["method"] = method
-	sign["request"] = request
 
 	var keys []string
 	for key := range sign {
