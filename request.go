@@ -15,9 +15,8 @@ import (
 )
 
 var RequestMethod = map[string]string{
-	"method": "",
-	//"timestamp":    time.Now().Format("2006-01-02 15:04:05"),
-	"timestamp":    "2023-01-31 15:04:05",
+	"method":       "",
+	"timestamp":    time.Now().Format("2006-01-02 15:04:05"),
 	"format":       "json",
 	"app_key":      "",
 	"access_token": "",
