@@ -11,12 +11,12 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 )
 
 var RequestMethod = map[string]string{
-	"method":       "",
-	"timestamp":    time.Now().Format("2006-01-02 15:04:05"),
+	"method": "",
+	//"timestamp":    time.Now().Format("2006-01-02 15:04:05"),
+	"timestamp":    "2023-01-31 15:04:05",
 	"format":       "json",
 	"app_key":      "",
 	"access_token": "",
@@ -47,21 +47,23 @@ func NewRequestImpl(conf *Conf) *RequestImpl {
 
 func (r *RequestImpl) Send(ctx context.Context, token, request, method string) (code, resp string, err error) {
 	// 1.对request参数签名
-	request = r.encrypt.SignRequest(request)
+	requested := r.encrypt.SignRequest(request)
+
 	// 2.对sign排序
-	sign := r.sortSign(token, request, method)
+	sign := r.sortSign(token, requested, method)
 	// 3.给sign签名
-	sign = r.encrypt.SignatureSign(sign, r.conf.SvcPkcs8Key)
+	signed := r.encrypt.SignatureSign(sign, r.conf.SvcPkcs8Key)
 	// 准备http请求体
 	req := RequestMethod
 	req["method"] = method
 	req["app_key"] = r.conf.AppKey
 	req["access_token"] = token
-	req["sign"] = sign
+	req["sign"] = signed
 	formData := url.Values{}
 	for key, value := range req {
 		formData.Set(key, value)
 	}
+	fmt.Println(bytes.NewBufferString(formData.Encode()))
 	// 发送http请求
 	response, err := http.Post(r.conf.URL, "application/x-www-form-urlencoded", bytes.NewBufferString(formData.Encode()))
 	if err != nil {
@@ -100,7 +102,18 @@ func (r *RequestImpl) Send(ctx context.Context, token, request, method string) (
 //	@return string access_tokenxxxapp_keyxxxformatxxxmethodxxxrequestxxxtimestampxxxvxxx
 func (r *RequestImpl) sortSign(token, request, method string) string {
 	// 声明一个sign结构体
-	sign := RequestMethod
+	var SignMethod = map[string]string{
+		"method": "",
+		//"timestamp":    time.Now().Format("2006-01-02 15:04:05"),
+		"timestamp":    "2023-01-31 15:04:05",
+		"format":       "json",
+		"app_key":      "",
+		"access_token": "",
+		"v":            "2.0",
+		"sign_method":  "rsa",
+		"request":      "",
+	}
+	sign := SignMethod
 	sign["access_token"] = token
 	sign["app_key"] = r.conf.AppKey
 	sign["method"] = method
