@@ -21,20 +21,20 @@ type Conf struct {
 	SvcPkcs8Key string
 }
 
-type Request interface {
+type Client interface {
 	Send(ctx context.Context, token, request, method string) (code, resp string, err error)
 }
-type RequestImpl struct {
+type client struct {
 	conf    *Conf
 	encrypt internal.EncryptUtil
 }
 
-func NewRequestImpl(conf *Conf) *RequestImpl {
+func NewClient(conf *Conf) Client {
 	encrypt := internal.NewEncryptUtilImpl(conf.Des3Key)
-	return &RequestImpl{conf: conf, encrypt: encrypt}
+	return &client{conf: conf, encrypt: encrypt}
 }
 
-func (r *RequestImpl) Send(ctx context.Context, token, request, method string) (code, resp string, err error) {
+func (r *client) Send(ctx context.Context, token, request, method string) (code, resp string, err error) {
 	// 1.对request参数签名
 	requested := r.encrypt.SignRequest(request)
 
@@ -94,7 +94,7 @@ func (r *RequestImpl) Send(ctx context.Context, token, request, method string) (
 //	@param method
 //	@param request
 //	@return string access_tokenxxxapp_keyxxxformatxxxmethodxxxrequestxxxtimestampxxxvxxx
-func (r *RequestImpl) sortSign(token, request, method string) string {
+func (r *client) sortSign(token, request, method string) string {
 	// 声明一个sign结构体
 	sign := map[string]string{
 		"method":       method,
@@ -126,7 +126,7 @@ func (r *RequestImpl) sortSign(token, request, method string) string {
 //	@receiver r
 //	@param response
 //	@return string
-func (r *RequestImpl) decodeResponse(response string) (errcode, request string) {
+func (r *client) decodeResponse(response string) (errcode, request string) {
 	// errcode=0&request=pXMP7aN%2BJapLT9iRIeBJ5%2FNpuRpXyZ3KSjx0Zge5R507u4ufhtiERiN0UygGUqhuxPuFSfHMkHEH5peNDx%2FN7na0%2FBJcTwBla0awncdyrMUStKyIgd8cShugF1HATPzyCnYIb4MmwrEarWBGP9tj8HuLnMQtNHDQlpkPLkcvRr3MctHDEJRhT4rp7ewdS%2BZw1HJVd2%2FdyZGeqc%2BgUUgB%2FZojwaKu3z7w9Ib9DOgdPWoVCC%2BzVlwJfVx2GLtr74j%2B5F4o6GUcIa4C5rZjywqbWjJNFtwMWY0cjjC8ANMcDCD9y7ajFaBQCBHlqg9iGW4k&sign=XgQz5fjo7xykIsHy6dZ8ajcCfGOkBPdli0kby%2FuxGB8haVarOLFKe9scFBMbL1vZm25u4vIi1Ju3%2FkO2oP1v0Rol54S%2BS%2FnHTcYuS6fdBQfA%2BI9lrX3kln0aypTxSUkyNyIESVfljcesu4TnVQvfKgbd0e8N2jnaQEfO0Ngk%2Fd%2FMvdR6dnrQp2hbf%2BPuG%2FgKvIN8ZCalKSAmGKi4eDt%2BQ5vRRFOlGTAF4yysDPhB8qPwVf8TnNZ73vgK%2FoFOt6oVkzWHziGCsUZoPYkVIan3O47eSeoYW3J5kEoiRYuHGVeENUWmBWIUsFSHGcOgZRajjKLjtrToM49ADaJGmGZ%2BKQ%3D%3D
 	// 对response进行url解码
 	decodeResponse, err := url.PathUnescape(response)
