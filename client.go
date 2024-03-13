@@ -3,6 +3,8 @@ package synjonesSDK
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/BigJiaXuan/synjonesSDK/internal"
 	"io"
@@ -22,11 +24,178 @@ type Conf struct {
 }
 
 type Client interface {
+	// Send 通用发送tsm请求方法
 	Send(ctx context.Context, token, request, method string) (code, resp string, err error)
+	// GetAccessToken 获取tsm access_token
+	GetAccessToken(ctx context.Context) (string, error)
+	// UnFrozenCard 校园卡解冻
+	UnFrozenCard(ctx context.Context, accessToken string, account int64) error
+	// OpenAccount 虚拟卡开户
+	OpenAccount(ctx context.Context, accessToken, sno, name, sex, idNo, phone, schoolCode, deptCode, pidCode, inDate, expDate, cardType, photo string) error
+	// GetBarCode 获取一卡通二维码
+	GetBarCode(ctx context.Context, accessToken, account, payType, payAcc string) (string, error)
 }
 type client struct {
 	conf    *Conf
 	encrypt internal.EncryptUtil
+}
+
+// GetBarCode
+//
+//	@Description: 获取一卡通二维码
+//	@receiver r
+//	@param ctx
+//	@param accessToken
+//	@param account 一卡通账号
+//	@param payType 支付方式 1 校园卡账户 2 绑定银行卡 3 自定义银行卡
+//	@param payAcc paytype为1 值为 ### 卡账户 其他为电子账户类型 paytype为2 可以空 paytype为3 可以是银行卡号
+//	@return string
+//	@return error
+func (r *client) GetBarCode(ctx context.Context, accessToken, account, payType, payAcc string) (string, error) {
+	method := "synjones.onecard.barcode.get"
+	request := fmt.Sprintf("{\n\"barcode_get\": {\n\"account\": \"%s\","+
+		" \"paytype\": \"%s\", "+
+		"\"payacc\": \"%s\"\n} }", account, payType, payAcc)
+	_, resp, err := r.Send(ctx, accessToken, request, method)
+	if err != nil {
+		return "", err
+	}
+	type Response struct {
+		BarcodeGet struct {
+			Retcode string `json:"retcode"`
+			Errmsg  string `json:"errmsg"`
+			Account string `json:"account"`
+			Paytype string `json:"paytype"`
+			Payacc  string `json:"payacc"`
+			Barcode string `json:"barcode"`
+			Expires string `json:"expires"`
+		} `json:"barcode_get"`
+	}
+	var response Response
+	err = json.Unmarshal([]byte(resp), &response)
+	if err != nil {
+		return "", err
+	}
+	if response.BarcodeGet.Retcode != "0" {
+		return "", errors.New(response.BarcodeGet.Errmsg)
+	}
+	return response.BarcodeGet.Barcode, nil
+}
+
+// OpenAccount
+//
+//	@Description:虚拟卡开户
+//	@receiver r
+//	@param ctx
+//	@param accessToken
+//	@param sno 学工号
+//	@param name 姓名
+//	@param sex 性别 1男 2女 9 未知
+//	@param idNo 身份证号
+//	@param phone 手机号
+//	@param schoolCode 校区代码
+//	@param deptCode 部门代码
+//	@param cardType 卡类型 800 正式卡 801 临时卡
+//	@param pidCode 身份代码
+//	@param inDate 入校日期
+//	@param expDate 失效日期
+//	@param photo base64照片
+//	@return error
+func (r *client) OpenAccount(ctx context.Context, accessToken, sno, name, sex, idNo, phone, schoolCode, deptCode, pidCode, inDate, expDate, cardType, photo string) error {
+	method := "synjones.onecard.open.acc"
+	request := fmt.Sprintf("{\n\"open_acc\": {\n\"sno\": \"%s\","+
+		"\n\"name\": \"%s\","+
+		"\n\"sex\": \"%s\","+
+		"\n\"idno\": \"%s\","+
+		"\n\"phone\": \"%s\","+
+		"\n\"schoolcode\": \"%s\","+
+		"\n\"depcode\": \"%s\","+
+		"\n\"born\": \" \","+
+		"\n\"pidcode\": \"%s\","+
+		"\n \"email\": \"\","+
+		"\n\"indate\": \"%s\","+
+		"\n\"expdate\": \"%s\","+
+		"\n\"cardtype\": \"%s\","+
+		"\n\"photo_image\": \"\"\n}\n}",
+		sno, name, sex, idNo, phone, schoolCode, deptCode, pidCode, inDate, expDate, cardType)
+	_, resp, err := r.Send(ctx, accessToken, request, method)
+	if err != nil {
+		return err
+	}
+	fmt.Println(resp)
+	type Response struct {
+		OpenAcc struct {
+			Retcode string `json:"retcode"`
+			Errmsg  string `json:"errmsg"`
+			Sno     string `json:"sno"`
+			Account string `json:"account"`
+		} `json:"open_acc"`
+	}
+	response := Response{}
+	err = json.Unmarshal([]byte(resp), &response)
+	if err != nil {
+		return err
+	}
+	if response.OpenAcc.Retcode != "0" {
+		return errors.New(response.OpenAcc.Errmsg)
+	}
+	return nil
+}
+
+// UnFrozenCard 校园卡解冻
+func (r *client) UnFrozenCard(ctx context.Context, accessToken string, account int64) error {
+	method := "synjones.onecard.unfrozen.card"
+	request := fmt.Sprintf("{\n\"unfrozen_card\": {\n\"account\": \"%d\" }\n}", account)
+	_, resp, err := r.Send(ctx, accessToken, request, method)
+	if err != nil {
+		return err
+	}
+	type Response struct {
+		UnforzenCard struct {
+			Account string `json:"account"`
+			Retcode string `json:"retcode"`
+			Errmsg  string `json:"errmsg"`
+		} `json:"unforzen_card"`
+	}
+	var res Response
+	err = json.Unmarshal([]byte(resp), &res)
+	if err != nil {
+		return err
+	}
+	if res.UnforzenCard.Retcode != "0" {
+		return errors.New(res.UnforzenCard.Errmsg)
+	}
+	return nil
+}
+
+// GetAccessToken 获取access_token
+func (r *client) GetAccessToken(ctx context.Context) (string, error) {
+	accessToken := "0000000000000000000000000000000000000000000000000000000000000000" +
+		"0000000000000000000000000000000000000000000000000000000000000000"
+	request := "{\"authorize_access_token\": {}}"
+	method := "synjones.authorize.access_token"
+	_, resp, err := r.Send(ctx, accessToken, request, method)
+	if err != nil {
+		return "", err
+	}
+	type Response struct {
+		AuthorizeAccessToken struct {
+			Retcode     string `json:"retcode"`
+			Errmsg      string `json:"errmsg"`
+			AccessToken string `json:"access_token"`
+			ExpiresIn   string `json:"expires_in"`
+		} `json:"authorize_access_token"`
+	}
+	var res Response
+	err = json.Unmarshal([]byte(resp), &res)
+	if err != nil {
+		return "", err
+	}
+	// 当retcode非0时，返回错误
+	if res.AuthorizeAccessToken.Retcode != "0" {
+		return "", errors.New(res.AuthorizeAccessToken.Errmsg)
+	}
+	return res.AuthorizeAccessToken.AccessToken, nil
 }
 
 func NewClient(conf *Conf) Client {
