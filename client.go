@@ -288,7 +288,7 @@ func (r *client) Send(ctx context.Context, token, request, method string) (code,
 	}
 	// 发送http请求
 	client := http.Client{
-		//Timeout: 5 * time.Second,
+		Timeout: 5 * time.Second,
 	}
 
 	response, err := client.Post(r.conf.URL, "application/x-www-form-urlencoded", bytes.NewBufferString(formData.Encode()))
