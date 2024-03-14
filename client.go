@@ -287,7 +287,12 @@ func (r *client) Send(ctx context.Context, token, request, method string) (code,
 		formData.Set(key, value)
 	}
 	// 发送http请求
-	response, err := http.Post(r.conf.URL, "application/x-www-form-urlencoded", bytes.NewBufferString(formData.Encode()))
+	client := http.Client{
+		//Timeout: 5 * time.Second,
+	}
+
+	response, err := client.Post(r.conf.URL, "application/x-www-form-urlencoded", bytes.NewBufferString(formData.Encode()))
+	//response, err := http.Post(r.conf.URL, "application/x-www-form-urlencoded", bytes.NewBufferString(formData.Encode()))
 	if err != nil {
 		return "", "", err
 	}
@@ -368,6 +373,7 @@ func (r *client) decodeResponse(response string) (errcode, request string) {
 	}
 	errorCode := query.Get("errcode")
 	req := strings.ReplaceAll(query.Get("request"), " ", "+")
+
 	// 对request进行解码操作
 	req = r.encrypt.DecryptResponse(req)
 	return errorCode, req

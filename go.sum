@@ -2,6 +2,8 @@ github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/emmansun/gmsm v0.15.5 h1:iLvUezUwA9WZHQFhK/UUhKhqviDczb28Qx+gynbvTKY=
 github.com/emmansun/gmsm v0.15.5/go.mod h1:2m4jygryohSWkaSduFErgCwQKab5BNjURoFrn2DNwyU=
+github.com/farmerx/gorsa v0.0.0-20161211100049-3ae06f674f40 h1:OgoboV484kN/ngW4apHvSw8iy9YhhQusAKSLT8nGl94=
+github.com/farmerx/gorsa v0.0.0-20161211100049-3ae06f674f40/go.mod h1:Gdtd77IQrjXqFfiourWpNnE1jDPC4opZPDPxPLWFlr0=
 github.com/golang-module/dongle v0.2.8 h1:AcoquGAfoLjSlw1w9pglBziw5HvNbtd1B4XVjK10Hh0=
 github.com/golang-module/dongle v0.2.8/go.mod h1:UhZVJiu/i4Sdsji5C5MuSF7lEH4cU1HsVVNdTHVdaq4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
@@ -9,6 +11,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5CcY=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
+github.com/wenzhenxi/gorsa v0.0.0-20230530123828-0320cce15d81 h1:mCWpbHxvTg/p9wIKzyR34b65g9p142HFpp6YtsyXTDw=
+github.com/wenzhenxi/gorsa v0.0.0-20230530123828-0320cce15d81/go.mod h1:nfhBTKji6rC8lrjyikx8NJ85JHg6ZQam0a9Je+2RVOg=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
