@@ -23,6 +23,22 @@ type Conf struct {
 	SvcPkcs8Key string
 }
 
+// OpenAcc 虚拟卡开户结构体
+type OpenAcc struct {
+	Sno        string
+	Name       string
+	Sex        string
+	IdNo       string
+	Phone      string
+	SchoolCode string
+	DeptCode   string
+	PidCode    string
+	InDate     string
+	ExpDate    string
+	CardType   string
+	Photo      string
+}
+
 type Client interface {
 	// Send 通用发送tsm请求方法
 	Send(ctx context.Context, token, request, method string) (code, resp string, err error)
@@ -34,6 +50,8 @@ type Client interface {
 	OpenAccount(ctx context.Context, accessToken, sno, name, sex, idNo, phone, schoolCode, deptCode, pidCode, inDate, expDate, cardType, photo string) error
 	// GetBarCode 获取一卡通二维码
 	GetBarCode(ctx context.Context, accessToken, account, payType, payAcc string) (string, error)
+	// OpenAccountV2 虚拟卡开户
+	OpenAccountV2(ctx context.Context, accessToken string, openAcc OpenAcc) error
 }
 type client struct {
 	conf    *Conf
@@ -118,6 +136,47 @@ func (r *client) OpenAccount(ctx context.Context, accessToken, sno, name, sex, i
 		"\n\"cardtype\": \"%s\","+
 		"\n\"photo_image\": \"\"\n}\n}",
 		sno, name, sex, idNo, phone, schoolCode, deptCode, pidCode, inDate, expDate, cardType)
+	_, resp, err := r.Send(ctx, accessToken, request, method)
+	if err != nil {
+		return err
+	}
+	fmt.Println(resp)
+	type Response struct {
+		OpenAcc struct {
+			Retcode string `json:"retcode"`
+			Errmsg  string `json:"errmsg"`
+			Sno     string `json:"sno"`
+			Account string `json:"account"`
+		} `json:"open_acc"`
+	}
+	response := Response{}
+	err = json.Unmarshal([]byte(resp), &response)
+	if err != nil {
+		return err
+	}
+	if response.OpenAcc.Retcode != "0" {
+		return errors.New(response.OpenAcc.Errmsg)
+	}
+	return nil
+}
+
+func (r *client) OpenAccountV2(ctx context.Context, accessToken string, openAcc OpenAcc) error {
+	method := "synjones.onecard.open.acc"
+	request := fmt.Sprintf("{\n\"open_acc\": {\n\"sno\": \"%s\","+
+		"\n\"name\": \"%s\","+
+		"\n\"sex\": \"%s\","+
+		"\n\"idno\": \"%s\","+
+		"\n\"phone\": \"%s\","+
+		"\n\"schoolcode\": \"%s\","+
+		"\n\"depcode\": \"%s\","+
+		"\n\"born\": \" \","+
+		"\n\"pidcode\": \"%s\","+
+		"\n \"email\": \"\","+
+		"\n\"indate\": \"%s\","+
+		"\n\"expdate\": \"%s\","+
+		"\n\"cardtype\": \"%s\","+
+		"\n\"photo_image\": \"\"\n}\n}",
+		openAcc.Sno, openAcc.Name, openAcc.Sex, openAcc.IdNo, openAcc.Phone, openAcc.SchoolCode, openAcc.DeptCode, openAcc.PidCode, openAcc.InDate, openAcc.ExpDate, openAcc.CardType)
 	_, resp, err := r.Send(ctx, accessToken, request, method)
 	if err != nil {
 		return err
