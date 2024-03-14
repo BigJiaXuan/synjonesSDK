@@ -51,11 +51,16 @@ type Client interface {
 	// GetBarCode 获取一卡通二维码
 	GetBarCode(ctx context.Context, accessToken, account, payType, payAcc string) (string, error)
 	// OpenAccountV2 虚拟卡开户
-	OpenAccountV2(ctx context.Context, accessToken string, openAcc OpenAcc) error
+	OpenAccountV2(ctx context.Context, accessToken string, openAcc OpenAcc) (sno, account string, err error)
 }
 type client struct {
 	conf    *Conf
 	encrypt internal.EncryptUtil
+}
+
+func NewClient(conf *Conf) Client {
+	encrypt := internal.NewEncryptUtilImpl(conf.Des3Key)
+	return &client{conf: conf, encrypt: encrypt}
 }
 
 // GetBarCode
@@ -160,7 +165,7 @@ func (r *client) OpenAccount(ctx context.Context, accessToken, sno, name, sex, i
 	return nil
 }
 
-func (r *client) OpenAccountV2(ctx context.Context, accessToken string, openAcc OpenAcc) error {
+func (r *client) OpenAccountV2(ctx context.Context, accessToken string, openAcc OpenAcc) (sno, account string, err error) {
 	method := "synjones.onecard.open.acc"
 	request := fmt.Sprintf("{\n\"open_acc\": {\n\"sno\": \"%s\","+
 		"\n\"name\": \"%s\","+
@@ -179,7 +184,7 @@ func (r *client) OpenAccountV2(ctx context.Context, accessToken string, openAcc 
 		openAcc.Sno, openAcc.Name, openAcc.Sex, openAcc.IdNo, openAcc.Phone, openAcc.SchoolCode, openAcc.DeptCode, openAcc.PidCode, openAcc.InDate, openAcc.ExpDate, openAcc.CardType)
 	_, resp, err := r.Send(ctx, accessToken, request, method)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	fmt.Println(resp)
 	type Response struct {
@@ -193,12 +198,12 @@ func (r *client) OpenAccountV2(ctx context.Context, accessToken string, openAcc 
 	response := Response{}
 	err = json.Unmarshal([]byte(resp), &response)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	if response.OpenAcc.Retcode != "0" {
-		return errors.New(response.OpenAcc.Errmsg)
+		return "", "", errors.New(response.OpenAcc.Errmsg)
 	}
-	return nil
+	return response.OpenAcc.Sno, response.OpenAcc.Account, nil
 }
 
 // UnFrozenCard 校园卡解冻
@@ -255,11 +260,6 @@ func (r *client) GetAccessToken(ctx context.Context) (string, error) {
 		return "", errors.New(res.AuthorizeAccessToken.Errmsg)
 	}
 	return res.AuthorizeAccessToken.AccessToken, nil
-}
-
-func NewClient(conf *Conf) Client {
-	encrypt := internal.NewEncryptUtilImpl(conf.Des3Key)
-	return &client{conf: conf, encrypt: encrypt}
 }
 
 func (r *client) Send(ctx context.Context, token, request, method string) (code, resp string, err error) {
