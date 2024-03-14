@@ -51,7 +51,7 @@ type Client interface {
 	// GetBarCode 获取一卡通二维码
 	GetBarCode(ctx context.Context, accessToken, account, payType, payAcc string) (string, error)
 	// OpenAccountV2 虚拟卡开户
-	OpenAccountV2(ctx context.Context, accessToken string, openAcc OpenAcc) (sno, account string, err error)
+	OpenAccountV2(ctx context.Context, accessToken string, openAcc OpenAcc) (errMsg, account, sno string, err error)
 }
 type client struct {
 	conf    *Conf
@@ -165,7 +165,7 @@ func (r *client) OpenAccount(ctx context.Context, accessToken, sno, name, sex, i
 	return nil
 }
 
-func (r *client) OpenAccountV2(ctx context.Context, accessToken string, openAcc OpenAcc) (sno, account string, err error) {
+func (r *client) OpenAccountV2(ctx context.Context, accessToken string, openAcc OpenAcc) (errMsg, account, sno string, err error) {
 	method := "synjones.onecard.open.acc"
 	request := fmt.Sprintf("{\n\"open_acc\": {\n\"sno\": \"%s\","+
 		"\n\"name\": \"%s\","+
@@ -184,9 +184,9 @@ func (r *client) OpenAccountV2(ctx context.Context, accessToken string, openAcc 
 		openAcc.Sno, openAcc.Name, openAcc.Sex, openAcc.IdNo, openAcc.Phone, openAcc.SchoolCode, openAcc.DeptCode, openAcc.PidCode, openAcc.InDate, openAcc.ExpDate, openAcc.CardType)
 	_, resp, err := r.Send(ctx, accessToken, request, method)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
-	fmt.Println(resp)
+	fmt.Println("tsm 返回的响应", resp)
 	type Response struct {
 		OpenAcc struct {
 			Retcode string `json:"retcode"`
@@ -198,12 +198,12 @@ func (r *client) OpenAccountV2(ctx context.Context, accessToken string, openAcc 
 	response := Response{}
 	err = json.Unmarshal([]byte(resp), &response)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	if response.OpenAcc.Retcode != "0" {
-		return "", "", errors.New(response.OpenAcc.Errmsg)
+		return "", "", "", errors.New(response.OpenAcc.Errmsg)
 	}
-	return response.OpenAcc.Sno, response.OpenAcc.Account, nil
+	return response.OpenAcc.Errmsg, response.OpenAcc.Account, response.OpenAcc.Sno, nil
 }
 
 // UnFrozenCard 校园卡解冻
